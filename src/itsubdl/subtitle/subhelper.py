@@ -107,8 +107,8 @@ def get_unique_filename(file_path: str | Path, used_filenames: set[str] = None) 
     """
     file_path = Path(file_path)
     path_str = str(file_path)
-    # if not used_filenames:
-    #    used_filenames = set()
+    if used_filenames is None:
+        used_filenames = set()
 
     # if the path doesn't exist and is not used, return as is
     if not file_path.exists() and path_str not in used_filenames:

@@ -148,7 +148,7 @@ async def main(input_arg: str | None = None):
     if input_arg is None:
         input_arg = args.input
         if input_arg is None:
-            console.print("Usage: python itunesdl.py <tmdb_id|appletv_url>")
+            console.print("Usage: itsubdl <tmdb_id|appletv_url>")
             return
 
     # if input is an Apple TV URL, use the Apple TV API to get title/year
