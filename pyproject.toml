@@ -1,0 +1,33 @@
+[project]
+name = "itsubdl"
+version = "1.0.0"
+description = "Download subtitles from iTunes."
+readme = "README.md"
+authors = [
+  { name="squash" }
+]
+license = "GPL-3.0-or-later"
+requires-python = ">=3.10"
+dependencies = [
+  "aiohttp",
+  "m3u8",
+  "rapidfuzz",
+  "requests",
+  "rich",
+  "simple-justwatch-python-api",
+  "subby @ git+https://github.com/vevv/subby.git",
+  "toml"
+]
+
+[project.scripts]
+itsubdl = "itunesdl:cli_main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
