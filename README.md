@@ -1,4 +1,4 @@
-# itsubdl
+# itsubdl <a href="https://www.python.org/downloads/release/python-3100/"><img src="https://img.shields.io/badge/Python-3.10%2B-brightgreen" alt="Python 3.10+"></a>
 Download subtitles from iTunes using a TMDB ID or Apple TV URL.
 
 ### Features
