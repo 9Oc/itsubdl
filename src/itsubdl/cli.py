@@ -133,15 +133,15 @@ async def main(input_arg: str | None = None):
     """
 
     args = parse_args()
-    # ensure config exists and is properly set up
-    ensure_config_exists()
-    # handle config update arguments
+
     if args.tmdb_api_key or args.output_dir:
         if args.tmdb_api_key:
             update_tmdb_api_key(args.tmdb_api_key)
         if args.output_dir:
             update_output_directory(args.output_dir)
         return
+
+    ensure_config_exists()
 
     output_dir = Path(get_output_directory())
 

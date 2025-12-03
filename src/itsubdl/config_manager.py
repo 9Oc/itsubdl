@@ -4,12 +4,14 @@ Handles reading/writing config.toml from user's app data directory.
 """
 import os
 from pathlib import Path
-from rich.console import Console
+
 import toml
+from platformdirs import user_config_dir
+from rich.console import Console
 
 console = Console(color_system="truecolor")
 
-CONFIG_DIR = Path(os.path.expandvars(r"%APPDATA%\.itsubdl"))
+CONFIG_DIR = Path(user_config_dir(".itsubdl"))
 CONFIG_FILE = CONFIG_DIR / "config.toml"
 
 
@@ -87,8 +89,17 @@ def update_tmdb_api_key(new_api_key: str) -> None:
     if not new_api_key or not new_api_key.strip():
         raise ValueError("TMDB API key cannot be empty")
 
-    config = load_config()
-    config["tmdb"]["api_key"] = new_api_key.strip()
+    try:
+        config = load_config()
+    except FileNotFoundError:
+        config = {
+            "tmdb": {"api_key": new_api_key.strip()},
+            "output": {"directory": ""},
+        }
+    else:
+        if "tmdb" not in config:
+            config["tmdb"] = {}
+        config["tmdb"]["api_key"] = new_api_key.strip()
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     with open(CONFIG_FILE, "w") as f:
@@ -105,8 +116,17 @@ def update_output_directory(new_output_dir: str) -> None:
     new_output_dir = os.path.expandvars(new_output_dir)
     new_output_dir = os.path.expanduser(new_output_dir)
 
-    config = load_config()
-    config["output"]["directory"] = new_output_dir
+    try:
+        config = load_config()
+    except FileNotFoundError:
+        config = {
+            "tmdb": {"api_key": ""},
+            "output": {"directory": new_output_dir},
+        }
+    else:
+        if "output" not in config:
+            config["output"] = {}
+        config["output"]["directory"] = new_output_dir
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     with open(CONFIG_FILE, "w") as f:
