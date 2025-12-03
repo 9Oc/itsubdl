@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-itsubdl = "itunesdl:cli_main"
+itsubdl = "itsubdl.cli:cli_main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
