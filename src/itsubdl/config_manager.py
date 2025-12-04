@@ -3,6 +3,7 @@ Config manager for itsubdl.
 Handles reading/writing config.toml from user's app data directory.
 """
 import os
+import re
 from pathlib import Path
 
 import toml
@@ -40,6 +41,13 @@ def ensure_config_exists() -> dict:
     # Expand any environment variables or user home directory
     output_dir = os.path.expandvars(output_dir)
     output_dir = os.path.expanduser(output_dir)
+    # Normalize to a forward-slash path so TOML doesn't interpret
+    # single backslashes as escape sequences on Windows.
+    try:
+        output_dir = str(Path(output_dir).as_posix())
+    except Exception:
+        # fallback to replacing backslashes if Path.as_posix() fails
+        output_dir = output_dir.replace('\\', '/')
 
     # Create the config dictionary
     config = {
@@ -53,7 +61,7 @@ def ensure_config_exists() -> dict:
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
-    with open(CONFIG_FILE, "w") as f:
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         toml.dump(config, f)
 
     console.print(f"[green]Config saved to {CONFIG_FILE}[/green]\n")
@@ -68,8 +76,32 @@ def load_config() -> dict:
     if not CONFIG_FILE.exists():
         raise FileNotFoundError(f"Config file not found: {CONFIG_FILE}")
 
-    with open(CONFIG_FILE, "r") as f:
-        return toml.load(f)
+    # Read the file contents first so we can attempt a lightweight
+    # recovery if TOML parsing fails due to windows backslashes in
+    # path strings (reserved escape sequences like \U).
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    try:
+        return toml.loads(content)
+    except Exception as err:
+        # If parsing failed due to reserved escape sequences, try to
+        # convert backslashes inside quoted strings to forward slashes
+        # and retry. This fixes malformed files written with single
+        # backslashes on Windows.
+        try:
+            fixed = re.sub(r'"([A-Za-z]:\\[^"\n]*)"',
+                           lambda m: '"' + m.group(1).replace('\\', '/') + '"',
+                           content)
+            config = toml.loads(fixed)
+            # Persist the fixed content back to the config file so
+            # subsequent runs don't hit the same error.
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                f.write(fixed)
+            return config
+        except Exception:
+            # Re-raise the original error with context if we cannot fix
+            raise
 
 
 def get_tmdb_api_key() -> str:
@@ -115,6 +147,11 @@ def update_output_directory(new_output_dir: str) -> None:
 
     new_output_dir = os.path.expandvars(new_output_dir)
     new_output_dir = os.path.expanduser(new_output_dir)
+    # Normalize to forward-slashes to avoid TOML escape issues on Windows
+    try:
+        new_output_dir = str(Path(new_output_dir).as_posix())
+    except Exception:
+        new_output_dir = new_output_dir.replace('\\', '/')
 
     try:
         config = load_config()
