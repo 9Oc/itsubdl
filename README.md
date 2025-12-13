@@ -51,6 +51,10 @@ Download subtitles for a movie using an Apple TV URL:
 itsubdl https://tv.apple.com/us/movie/example-title/umc.cmc.123456789012345678901234
 ```
 
+Example output:
+
+<img src="https://img.onlyimage.org/FhpZ9t.png">
+
 ## Configuration
 On first run, you will be prompted to enter your TMDB API key and output directory for subtitles.
 
