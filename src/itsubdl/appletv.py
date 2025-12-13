@@ -67,6 +67,11 @@ REGIONS_TO_ALWAYS_CHECK = [
     'nl', 'ru', 'sv', 'tw'
 ]
 
+CC_CHARACTERISTICS = {
+    "public.accessibility.describes-music-and-sound",
+    "public.accessibility.transcribes-spoken-dialog",
+}
+
 
 def get_date_from_ts(timestamp) -> datetime:
     """
@@ -401,77 +406,65 @@ async def get_movie_data(session, storefront_id, movie_id):
     return itunes_playables
 
 
-async def find_subtitle_playlists(session, master_playlist_url):
-    """Find all subtitle playlist URLs in a master HLS playlist."""
+async def _fetch_and_parse_playlist(session, url):
+    """Fetches a playlist URL and returns a parsed m3u8 object."""
     try:
-        text = await fetch_text(session, master_playlist_url)
-        master = m3u8.loads(text, uri=master_playlist_url)
-    except Exception as e:
+        text = await fetch_text(session, url)
+        return m3u8.loads(text, uri=url)
+    except Exception:
+        return None
+
+
+def _extract_subtitle_media(playlist):
+    """
+    Extracts subtitle information from a parsed m3u8 object.
+    Returns a list of subtitles as dicts with keys: url, language, name, forced, cc
+    """
+    if not playlist or not playlist.media:
         return []
 
-    subtitle_urls = []
-    CC_CHARACTERISTICS = {
-        "public.accessibility.describes-music-and-sound",
-        "public.accessibility.transcribes-spoken-dialog",
-    }
-    # find subtitles in master playlist
-    for media in master.media:
+    subtitles = []
+    for media in playlist.media:
         if media.type == "SUBTITLES" and media.uri:
-            cc = False
-            if media.characteristics:
-                tokens = media.characteristics.split(",")
-                for tokn in tokens:
-                    if tokn.strip() in CC_CHARACTERISTICS:
-                        cc = True
-                        break
-            subtitle_urls.append({
+            # check for closed captions
+            characteristics = set((media.characteristics or "").split(","))
+            is_cc = not characteristics.isdisjoint(CC_CHARACTERISTICS)
+
+            subtitles.append({
                 "url": media.absolute_uri,
                 "language": media.language or "unknown",
                 "name": media.name or "Unknown",
-                "forced": True if media.forced == "YES" else False,
-                "cc": cc
+                "forced": media.forced == "YES",
+                "cc": is_cc,
             })
+    return subtitles
 
-    # check variant playlists in parallel
-    async def fetch_variant_subs(variant_url):
-        try:
-            text2 = await fetch_text(session, variant_url)
-            child = m3u8.loads(text2, uri=variant_url)
-            found = []
-            for media in child.media:
-                if media.type == "SUBTITLES" and media.uri:
-                    cc = False
-                    if media.characteristics:
-                        tokens = media.characteristics.split(",")
-                        for tokn in tokens:
-                            if tokn.strip() in CC_CHARACTERISTICS:
-                                cc = True
-                                break
-                    found.append({
-                        "url": media.absolute_uri,
-                        "language": media.language or "unknown",
-                        "name": media.name or "unknown",
-                        "forced": True if media.forced == "YES" else False,
-                        "cc": cc
-                    })
-            return found
-        except Exception:
-            return []
 
-    # fetch all variants concurrently
-    variant_tasks = [fetch_variant_subs(variant.absolute_uri) for variant in master.playlists]
-    variant_results = await asyncio.gather(*variant_tasks)
+async def find_subtitle_playlists(session, master_playlist_url):
+    """Find all unique subtitle playlists in a given master HLS playlist."""
+    master_playlist = await _fetch_and_parse_playlist(session, master_playlist_url)
+    if not master_playlist:
+        return []
 
-    # flatten results
-    for subs in variant_results:
-        subtitle_urls.extend(subs)
+    subtitles = _extract_subtitle_media(master_playlist)
 
-    # remove duplicates by URL
-    seen = set()
+    variant_urls = [variant.absolute_uri for variant in master_playlist.playlists]
+
+    variant_playlist_tasks = [
+        _fetch_and_parse_playlist(session, url) for url in variant_urls
+    ]
+
+    variant_playlists = await asyncio.gather(*variant_playlist_tasks)
+
+    for playlist in variant_playlists:
+        if playlist:
+            subtitles.extend(_extract_subtitle_media(playlist))
+
+    seen_urls = set()
     unique_subs = []
-    for sub in subtitle_urls:
-        if sub["url"] not in seen:
-            seen.add(sub["url"])
+    for sub in subtitles:
+        if sub["url"] not in seen_urls:
+            seen_urls.add(sub["url"])
             unique_subs.append(sub)
 
     return unique_subs
