@@ -346,7 +346,7 @@ def dedupe(directory: str | Path) -> tuple[list[Path], list[Path]]:
 
     # if no subs are left after removing forced, deduping is finished
     if len(subhelper.get_subtitle_files(directory, "vtt")) == 0:
-        return [], []
+        return [], [], []
 
     # dedupe all subs using md5 hash comparison
     # this is done first as it's much quicker than fuzzy deduping
