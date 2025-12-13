@@ -1,7 +1,3 @@
-"""
-Config manager for itsubdl.
-Handles reading/writing config.toml from user's app data directory.
-"""
 import os
 import re
 from pathlib import Path
@@ -25,7 +21,7 @@ def ensure_config_exists() -> dict:
     if CONFIG_FILE.exists():
         return load_config()
 
-    # Config doesn't exist, prompt user for input
+    # config doesn't exist, prompt user for input
     console.print("[yellow]Config not found. Let's set up your configuration.[/yellow]\n")
 
     tmdb_api_key = console.input("[cyan]Enter your TMDB API key:[/cyan] ").strip()
@@ -38,10 +34,10 @@ def ensure_config_exists() -> dict:
         console.print("[red]Error: Output directory cannot be empty.[/red]")
         raise ValueError("Output directory is required")
 
-    # Expand any environment variables or user home directory
+    # expand any environment variables or user home directory
     output_dir = os.path.expandvars(output_dir)
     output_dir = os.path.expanduser(output_dir)
-    # Normalize to a forward-slash path so TOML doesn't interpret
+    # normalize to a forward-slash path so TOML doesn't interpret
     # single backslashes as escape sequences on Windows.
     try:
         output_dir = str(Path(output_dir).as_posix())
@@ -49,7 +45,7 @@ def ensure_config_exists() -> dict:
         # fallback to replacing backslashes if Path.as_posix() fails
         output_dir = output_dir.replace('\\', '/')
 
-    # Create the config dictionary
+    # create the config dictionary
     config = {
         "tmdb": {
             "api_key": tmdb_api_key,
