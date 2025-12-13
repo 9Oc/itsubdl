@@ -27,6 +27,11 @@ cd itsubdl
 pip install .
 ```
 
+Updating:
+```
+pip install --upgrade git+https://github.com/9Oc/itsubdl.git
+```
+
 ## Usage
 A TMDB ID or an Apple TV url are both accepted arguments. If using a TMDB ID, `itsubdl` will search for a matching Apple TV url
 
