@@ -197,13 +197,17 @@ def strip_numbered_suffix(filename: str) -> str:
     stem = path.stem
     suffix = path.suffix
 
-    m = FileName.NUMBERED_SUFFIX.match(stem)
-    if m:
-        new_stem = m.group(1)
-    else:
-        new_stem = stem
+    m = FileName.NUMBERED_SUFFIX.match(filename)
+    if not m:
+        return filename
+    base = m.group(1)
+    ext = m.group(3) or ""
+    # if m:
+    #     new_stem = m.group(1)
+    # else:
+    #     new_stem = stem
 
-    return f"{new_stem}{suffix}"
+    return f"{base}{ext}"
 
 
 def fix_sdh_subtitles(folder_path: str | Path):

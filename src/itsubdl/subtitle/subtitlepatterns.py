@@ -3,8 +3,8 @@ import re
 
 class FileName:
     ENGLISH_LANG_TAG = re.compile(r'\.en(-US|-GB)?(\[(sdh|forced)\])?$', re.IGNORECASE)
-    # NUMBERED_SUFFIX = re.compile(r'^(.*?)-(\d+)(?:\.[^.]+)?$', re.IGNORECASE)
-    NUMBERED_SUFFIX = re.compile(r'^(.*?)(?<!\d)-(\d{1,2})(\.[^.]+)?$', re.IGNORECASE)
+    # NUMBERED_SUFFIX = re.compile(r'^(.*?)(?<!\d)-(\d{1,2})(\.[^.]+)?$', re.IGNORECASE)
+    NUMBERED_SUFFIX = re.compile(r'^(.*?)-(\d{1,2})(\.[^.]+)?$', re.IGNORECASE)
     CLEANUP_RULES = [
         (re.compile(r'cmn-Hant'), 'zh-Hant', 'cmn'),
         (re.compile(r'cmn-Hans'), 'zh-Hans', 'cmn'),
