@@ -50,30 +50,30 @@ ATV_URL_REGEX = re.compile(
 
 # map of all regions and their storefront IDs
 REGION_STOREFRONT_MAP = {
-    "ae": 143481, "ag": 143540, "ai": 143538, "am": 143524, "ao":  143564, "ar": 143505,
-    "at":  143445, "au": 143460, "az": 143568, "bb": 143541, "bd": 143490, "be": 143446,
+    "ae": 143481, "ag": 143540, "ai": 143538, "am": 143524, "ao": 143564, "ar": 143505,
+    "at": 143445, "au": 143460, "az": 143568, "bb": 143541, "bd": 143490, "be": 143446,
     "bg": 143526, "bh": 143559, "bm": 143542, "bn": 143560, "bo": 143556, "br": 143503,
-    "bs": 143539, "bw": 143525, "by": 143565, "bz": 143555, "ca":  143455, "ch": 143459,
-    "ci":  143527, "cl": 143483, "cn": 143465, "co": 143501, "cr": 143495, "cv": 143580,
-    "cy": 143557, "cz": 143489, "de": 143443, "dk":  143458, "dm": 143545, "do": 143508,
-    "dz":  143563, "ec": 143509, "ee": 143518, "eg": 143516, "es": 143454, "fi": 143447,
-    "fj": 143583, "fm": 143591, "fr":  143442, "gb": 143444, "gd": 143546, "gh": 143573,
-    "gm": 143584, "gr": 143448, "gt":  143504, "gw": 143585, "gy": 143553, "hk": 143463,
-    "hn": 143510, "hr": 143494, "hu": 143482, "id": 143476, "ie":  143449, "il": 143491,
-    "in":  143467, "is": 143558, "it": 143450, "jm": 143511, "jo": 143528, "jp": 143462,
+    "bs": 143539, "bw": 143525, "by": 143565, "bz": 143555, "ca": 143455, "ch": 143459,
+    "ci": 143527, "cl": 143483, "cn": 143465, "co": 143501, "cr": 143495, "cv": 143580,
+    "cy": 143557, "cz": 143489, "de": 143443, "dk": 143458, "dm": 143545, "do": 143508,
+    "dz": 143563, "ec": 143509, "ee": 143518, "eg": 143516, "es": 143454, "fi": 143447,
+    "fj": 143583, "fm": 143591, "fr": 143442, "gb": 143444, "gd": 143546, "gh": 143573,
+    "gm": 143584, "gr": 143448, "gt": 143504, "gw": 143585, "gy": 143553, "hk": 143463,
+    "hn": 143510, "hr": 143494, "hu": 143482, "id": 143476, "ie": 143449, "il": 143491,
+    "in": 143467, "is": 143558, "it": 143450, "jm": 143511, "jo": 143528, "jp": 143462,
     "ke": 143529, "kg": 143586, "kh": 143579, "kn": 143548, "kr": 143466, "kw": 143493,
-    "ky": 143544, "kz": 143517, "la": 143587, "lb": 143497, "lc": 143549, "li":  143522,
-    "lk": 143486, "lt": 143520, "lu":  143451, "lv":  143519, "md": 143523, "mg": 143531,
-    "mk": 143530, "ml": 143532, "mn": 143592, "mo": 143515, "ms":  143547, "mt": 143521,
-    "mu":  143533, "mv": 143488, "mx": 143468, "my": 143473, "mz": 143593, "na": 143594,
-    "ne": 143534, "ng":  143561, "ni": 143512, "nl": 143452, "no": 143457, "np": 143484,
+    "ky": 143544, "kz": 143517, "la": 143587, "lb": 143497, "lc": 143549, "li": 143522,
+    "lk": 143486, "lt": 143520, "lu": 143451, "lv": 143519, "md": 143523, "mg": 143531,
+    "mk": 143530, "ml": 143532, "mn": 143592, "mo": 143515, "ms": 143547, "mt": 143521,
+    "mu": 143533, "mv": 143488, "mx": 143468, "my": 143473, "mz": 143593, "na": 143594,
+    "ne": 143534, "ng": 143561, "ni": 143512, "nl": 143452, "no": 143457, "np": 143484,
     "nz": 143461, "om": 143562, "pa": 143485, "pe": 143507, "ph": 143474, "pk": 143477,
-    "pl": 143478, "pt": 143453, "py":  143513, "qa": 143498, "ro": 143487, "rs": 143500,
+    "pl": 143478, "pt": 143453, "py": 143513, "qa": 143498, "ro": 143487, "rs": 143500,
     "ru": 143469, "sa": 143479, "se": 143456, "sg": 143464, "si": 143499, "sk": 143496,
-    "sn": 143535, "sr": 143554, "sv":  143506, "sz": 143602, "tc":  143552, "th": 143475,
-    "tj":  143603, "tm": 143604, "tn": 143536, "tr":  143480, "tt": 143551, "tw": 143470,
-    "tz":  143572, "ua": 143492, "ug": 143537, "us": 143441, "uk": 143444, "uy": 143514,
-    "uz": 143566, "vc": 143550, "ve": 143502, "vg": 143543, "vn": 143471, "ye":  143571,
+    "sn": 143535, "sr": 143554, "sv": 143506, "sz": 143602, "tc": 143552, "th": 143475,
+    "tj": 143603, "tm": 143604, "tn": 143536, "tr": 143480, "tt": 143551, "tw": 143470,
+    "tz": 143572, "ua": 143492, "ug": 143537, "us": 143441, "uk": 143444, "uy": 143514,
+    "uz": 143566, "vc": 143550, "ve": 143502, "vg": 143543, "vn": 143471, "ye": 143571,
     "za": 143472, "zw": 143605
 }
 REGIONS_TO_ALWAYS_CHECK = [
@@ -316,6 +316,15 @@ def get_appletv_url(tmdb_movie):
         return asyncio.run(get_appletv_url_async(tmdb_movie))
 
 
+async def check_head_success(session, url):
+    """Check if a HEAD request to the URL is successful."""
+    try:
+        async with session.head(url, headers=DEFAULT_HEADERS, allow_redirects=True) as resp:
+            return resp.status < 400
+    except Exception:
+        return False
+
+
 async def fetch_json(session, url, params=None):
     """Fetch JSON data from a URL."""
     async with session.get(url, params=params, headers=DEFAULT_HEADERS) as resp:
@@ -339,7 +348,7 @@ async def fetch_binary(session, url):
 
 async def fetch_binary_with_retry(session, url, max_retries=2, retry_delay=1.0):
     """Fetch binary data with retry logic using alternative CDNs."""
-    cdns = ["vod-ap-amt", "vod-ak-amt", "vod-fa-amt"]
+    cdns = ["vod-ak-amt", "vod-ap-amt", "vod-fa-amt"]
 
     for attempt in range(max_retries + 1):  # +1 to include initial attempt
         try:
@@ -363,7 +372,6 @@ async def get_configuration_data(session, storefront_id):
     url = f"{API_BASE_URL}/configurations"
     params = API_BASE_PARAMS.copy()
     params["sf"] = storefront_id
-
     data = await fetch_json(session, url, params)
     return data["data"]
 
@@ -402,22 +410,31 @@ async def get_movie_data(session, storefront_id, movie_id):
     itunes_playables = []
 
     for playable in playables:
-        if playable.get("channelId") == "tvs.sbd.9001":  # iTunes channel
-            itunes_data = playable.get("itunesMediaApiData", {})
+        if playable.get("channelId") != "tvs.sbd.9001":  # iTunes channel
+            continue
+        itunes_data = playable.get("itunesMediaApiData", {})
+        # extract playlists from offers
+        playlists = []
+        if offers := itunes_data.get("offers"):
+            for offer in offers:
+                if hls_url := offer.get("hlsUrl"):
+                    if hls_url not in playlists:
+                        playlists.append(hls_url)
 
-            # extract playlists from offers
-            playlists = []
-            if offers := itunes_data.get("offers"):
-                for offer in offers:
-                    if hls_url := offer.get("hlsUrl"):
-                        if hls_url not in playlists:
-                            playlists.append(hls_url)
-
-            if playlists:
+        if playlists:
+            tasks = [
+                check_head_success(session, hls_url)
+                for hls_url in playlists
+            ]
+            results = await asyncio.gather(*tasks)
+            valid_playlists = [
+                url for url, ok in zip(playlists, results) if ok
+            ]
+            if valid_playlists:
                 itunes_playables.append({
                     "name": playable.get("canonicalMetadata", {}).get("movieTitle", "Unknown"),
                     "release_date": get_date_from_ts(playable.get("canonicalMetadata", {}).get("releaseDate")).year,
-                    "playlists": playlists
+                    "playlists": valid_playlists
                 })
 
     return itunes_playables
@@ -461,51 +478,8 @@ def _extract_subtitle_media(playlist):
                 "name": media.name or "Unknown",
                 "forced": media.forced == "YES",
                 "cc": _is_cc_from_characteristics(media.characteristics),
-                "group_id": getattr(media, "group_id", None),
             })
     return subtitles
-
-
-async def _get_subtitles_from_first_working_playlist(session, playlist_entries: list[dict]) -> list[dict]:
-    """
-    Given many playlist URLs for the same playlist id, try them all concurrently and
-    return subtitles from the first one that successfully yields subtitle media items.
-
-    This prevents a "dead id" situation where one region returns 404 even though
-    another region for the same id works causinging the subtitles for that id to
-    never get downloaded.
-    """
-    if not playlist_entries:
-        return []
-
-    async def _try_one(entry: dict) -> list[dict]:
-        try:
-            return await find_subtitle_playlists(session, entry["url"])
-        except Exception:
-            return []
-
-    tasks = [asyncio.create_task(_try_one(entry)) for entry in playlist_entries]
-
-    try:
-        for finished in asyncio.as_completed(tasks):
-            subs = await finished
-            if subs:
-                # cancel remaining tasks
-                for t in tasks:
-                    if not t.done():
-                        t.cancel()
-                # drain cancellations quietly
-                await asyncio.gather(*tasks, return_exceptions=True)
-                return subs
-
-        return []
-
-    finally:
-        # ensure no tasks leak if caller cancels
-        for t in tasks:
-            if not t.done():
-                t.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def find_subtitle_playlists(session, master_playlist_url):
@@ -643,7 +617,8 @@ async def get_unique_playlists_from_regions(session, base_url_data, regions):
         if region not in regions:
             regions.append(region)
 
-    playlists_by_id: dict[str, list[dict]] = {}
+    all_playlists = []
+    seen_ids = set()
 
     # create tasks for all regions
     tasks = []
@@ -655,9 +630,8 @@ async def get_unique_playlists_from_regions(session, base_url_data, regions):
         tasks.append(get_movie_data_safe(session, storefront_id, base_url_data["media_id"], country_code))
 
     # fetch all regions concurrently
-    with console.status(f"[green][APPLE TV][/green] Fetching data from {len(regions)} regions", spinner="dots", spinner_style="white", speed=0.9):
+    with console.status(pluralize_numbers(f"[green][APPLE TV][/green] Fetching data from {len(regions)} region"), spinner="dots", spinner_style="white", speed=0.9):
         results = await asyncio.gather(*tasks)
-
         # process results
         regions_with_data = 0
         for country_code, movies in results:
@@ -670,17 +644,19 @@ async def get_unique_playlists_from_regions(session, base_url_data, regions):
                         parsed = urlparse(playlist_url)
                         params = parse_qs(parsed.query)
                         playlist_id = params.get("id", [None])[0]
-                        playlists_by_id.setdefault(playlist_id, []).append({
-                            "url": playlist_url,
-                            "region": country_code,
-                            "movie_name": movie.get("name", "Unknown"),
-                            "movie_year": movie.get("release_date", "Unknown")
-                        })
+                        if playlist_id and playlist_id not in seen_ids:
+                            seen_ids.add(playlist_id)
+                            all_playlists.append({
+                                "url": playlist_url,
+                                "region": country_code,
+                                "movie_name": movie.get("name", "Unknown"),
+                                "movie_year": movie.get("release_date", "Unknown")
+                            })
 
-    print(pluralize_numbers(
-        f"[green][APPLE TV][/green] Found [orange1]{len(playlists_by_id)}[/orange1] playlist across [orange1]{regions_with_data}[/orange1] region"))
+    console.print(pluralize_numbers(
+        f"[green][APPLE TV][/green] Found [orange1]{len(all_playlists)}[/orange1] playlist across [orange1]{regions_with_data}[/orange1] region"))
 
-    return playlists_by_id
+    return all_playlists
 
 
 async def get_movie_data_safe(session, storefront_id, movie_id, country_code):
@@ -692,8 +668,8 @@ async def get_movie_data_safe(session, storefront_id, movie_id, country_code):
         return (country_code, [])
 
 
-async def process_all_playlists(session, playlists_by_id, output_dir, movie):
-    if not playlists_by_id:
+async def process_all_playlists(session, playlists, output_dir, movie):
+    if not playlists:
         print("[yellow][APPLE TV][/yellow] No playlists provided to process")
         return
 
@@ -708,12 +684,12 @@ async def process_all_playlists(session, playlists_by_id, output_dir, movie):
 
     with console.status(f"[green][APPLE TV][/green] Extracting subtitles from playlists", spinner="dots", spinner_style="white", speed=0.9):
         tasks = [
-            _get_subtitles_from_first_working_playlist(session, entries)
-            for entries in playlists_by_id.values()
+            find_subtitle_playlists(session, playlist["url"])
+            for playlist in playlists
         ]
         all_subtitles_results = await asyncio.gather(*tasks)
 
-        all_subtitles: list[dict] = []
+        all_subtitles = []
         for subs in all_subtitles_results:
             for sub in subs:
                 # filter duplicate CDNS
@@ -723,7 +699,8 @@ async def process_all_playlists(session, playlists_by_id, output_dir, movie):
                     all_subtitles.append(sub)
 
     if all_subtitles:
-        with console.status(f"[green][APPLE TV][/green] Downloading [orange1]{len(all_subtitles)}[/orange1] subtitles from playlists", spinner="dots", spinner_style="white", speed=0.9):
+        with console.status(pluralize_numbers(f"[green][APPLE TV][/green] Downloading [orange1]{len(all_subtitles)}[/orange1] subtitle from playlists"),
+                            spinner="dots", spinner_style="white", speed=0.9):
             # group by language
             lang_count = {}
             for sub in all_subtitles:
@@ -764,7 +741,7 @@ async def process_all_playlists(session, playlists_by_id, output_dir, movie):
 
             # create download tasks
             download_tasks = [
-                download_with_info(session, info["subtitle"], info["output_path"], info["idx"], info["total"])
+                download_with_info(session, info["subtitle"], info["output_path"])
                 for info in subtitle_download_info
             ]
 
@@ -777,9 +754,8 @@ async def process_all_playlists(session, playlists_by_id, output_dir, movie):
         print("[yellow][APPLE TV][/yellow] No subtitles available for download")
 
 
-async def download_with_info(session, subtitle, output_path, idx, total):
-    """Download a the given subtitle."""
-
+async def download_with_info(session, subtitle, output_path):
+    """Download the given subtitle."""
     success = await download_subtitle_segments(session, subtitle["url"], output_path)
     return success
 
@@ -831,17 +807,17 @@ async def download_subs(appletv_url, output_dir, regions, movie):
     async with aiohttp.ClientSession(connector=connector, headers=DEFAULT_HEADERS) as session:
         try:
             # get unique playlists from all regions
-            playlists_by_id = await get_unique_playlists_from_regions(session, url_data, regions)
+            playlists = await get_unique_playlists_from_regions(session, url_data, regions)
 
             # if not playlists:
-            if not playlists_by_id:
+            if not playlists:
                 print(
                     f"[yellow][APPLE TV][/yellow] No .m3u8 playlists found in any region for URL: [dodger_blue1]{appletv_url}[/dodger_blue1]")
                 return False
 
             # Process all playlists and download subtitles
             # await process_all_playlists(session, playlists, output_dir, movie)
-            await process_all_playlists(session, playlists_by_id, output_dir, movie)
+            await process_all_playlists(session, playlists, output_dir, movie)
 
         except Exception as e:
             print(f"[red][APPLE TV][/red] Error while scraping Apple TV: {e}")
