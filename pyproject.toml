@@ -1,6 +1,6 @@
 [project]
 name = "itsubdl"
-version = "1.0.4"
+version = "1.0.5"
 description = "Download subtitles from iTunes."
 readme = "README.md"
 authors = [
