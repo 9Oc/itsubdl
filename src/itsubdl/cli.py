@@ -8,7 +8,8 @@ from pathlib import Path
 import aiohttp
 from rich.console import Console
 
-from itsubdl import appletv, pluralize, tmdb
+from itsubdl import appletv, tmdb
+from itsubdl.pluralize import pluralize_numbers
 from itsubdl.config_manager import (
     ensure_config_exists,
     get_output_directory,
@@ -224,13 +225,13 @@ async def main(input_arg: str | None = None):
 
     vtt_files = subhelper.get_subtitle_files(temp_download_dir, "vtt")
     if len(vtt_files) > 0:
-        console.print(f"[green][APPLE TV][/green] Finished downloading [orange1]{len(vtt_files)}[/orange1] subtitle files")
+        console.print(pluralize_numbers(f"[green][APPLE TV][/green] Finished downloading [orange1]{len(vtt_files)}[/orange1] subtitle"))
     with console.status(f"[green][CLEANUP][/green] Running cleanup tasks", spinner="dots", spinner_style="white", speed=0.9):
         md5_deduped, fuzzy_deduped, forced_deduped = subdeduper.dedupe(temp_download_dir)
     if len(md5_deduped) > 0:
-        console.print(f"[green][CLEANUP][/green] [orange1]{len(md5_deduped)}[/orange1] files MD5 hash deduped")
+        console.print(pluralize_numbers(f"[green][CLEANUP][/green] [orange1]{len(md5_deduped)}[/orange1] file MD5 hash deduped"))
     if len(fuzzy_deduped) > 0:
-        console.print(f"[green][CLEANUP][/green] [orange1]{len(fuzzy_deduped)}[/orange1] files fuzzy deduped")
+        console.print(pluralize_numbers(f"[green][CLEANUP][/green] [orange1]{len(fuzzy_deduped)}[/orange1] file fuzzy deduped"))
     if len(forced_deduped) > 0:
         console.print(f"[green][CLEANUP][/green] [orange1]{len(forced_deduped)}[/orange1] forced subtitles deduped")
 
@@ -242,7 +243,7 @@ async def main(input_arg: str | None = None):
         itunes_folder.mkdir(parents=True, exist_ok=True)
 
         moved = move_srt_files_to_folder(temp_download_dir, itunes_folder)
-        console.print(pluralize.pluralize_numbers(
+        console.print(pluralize_numbers(
             f"[green][CLEANUP][/green] Moved [orange1]{len(moved)}[/orange1] file to [dodger_blue1]{itunes_folder}[/dodger_blue1]"))
 
     shutil.rmtree(temp_download_dir, ignore_errors=True)
