@@ -3,7 +3,7 @@ import re
 import traceback
 from datetime import datetime, timedelta
 from pathlib import Path
-from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import aiohttp
 import m3u8
@@ -50,35 +50,170 @@ ATV_URL_REGEX = re.compile(
 
 # map of all regions and their storefront IDs
 REGION_STOREFRONT_MAP = {
-    "ae": 143481, "ag": 143540, "ai": 143538, "am": 143524, "ao": 143564, "ar": 143505,
-    "at": 143445, "au": 143460, "az": 143568, "bb": 143541, "bd": 143490, "be": 143446,
-    "bg": 143526, "bh": 143559, "bm": 143542, "bn": 143560, "bo": 143556, "br": 143503,
-    "bs": 143539, "bw": 143525, "by": 143565, "bz": 143555, "ca": 143455, "ch": 143459,
-    "ci": 143527, "cl": 143483, "cn": 143465, "co": 143501, "cr": 143495, "cv": 143580,
-    "cy": 143557, "cz": 143489, "de": 143443, "dk": 143458, "dm": 143545, "do": 143508,
-    "dz": 143563, "ec": 143509, "ee": 143518, "eg": 143516, "es": 143454, "fi": 143447,
-    "fj": 143583, "fm": 143591, "fr": 143442, "gb": 143444, "gd": 143546, "gh": 143573,
-    "gm": 143584, "gr": 143448, "gt": 143504, "gw": 143585, "gy": 143553, "hk": 143463,
-    "hn": 143510, "hr": 143494, "hu": 143482, "id": 143476, "ie": 143449, "il": 143491,
-    "in": 143467, "is": 143558, "it": 143450, "jm": 143511, "jo": 143528, "jp": 143462,
-    "ke": 143529, "kg": 143586, "kh": 143579, "kn": 143548, "kr": 143466, "kw": 143493,
-    "ky": 143544, "kz": 143517, "la": 143587, "lb": 143497, "lc": 143549, "li": 143522,
-    "lk": 143486, "lt": 143520, "lu": 143451, "lv": 143519, "md": 143523, "mg": 143531,
-    "mk": 143530, "ml": 143532, "mn": 143592, "mo": 143515, "ms": 143547, "mt": 143521,
-    "mu": 143533, "mv": 143488, "mx": 143468, "my": 143473, "mz": 143593, "na": 143594,
-    "ne": 143534, "ng": 143561, "ni": 143512, "nl": 143452, "no": 143457, "np": 143484,
-    "nz": 143461, "om": 143562, "pa": 143485, "pe": 143507, "ph": 143474, "pk": 143477,
-    "pl": 143478, "pt": 143453, "py": 143513, "qa": 143498, "ro": 143487, "rs": 143500,
-    "ru": 143469, "sa": 143479, "se": 143456, "sg": 143464, "si": 143499, "sk": 143496,
-    "sn": 143535, "sr": 143554, "sv": 143506, "sz": 143602, "tc": 143552, "th": 143475,
-    "tj": 143603, "tm": 143604, "tn": 143536, "tr": 143480, "tt": 143551, "tw": 143470,
-    "tz": 143572, "ua": 143492, "ug": 143537, "us": 143441, "uk": 143444, "uy": 143514,
-    "uz": 143566, "vc": 143550, "ve": 143502, "vg": 143543, "vn": 143471, "ye": 143571,
-    "za": 143472, "zw": 143605
+    "ae": 143481,
+    "ag": 143540,
+    "ai": 143538,
+    "am": 143524,
+    "ao": 143564,
+    "ar": 143505,
+    "at": 143445,
+    "au": 143460,
+    "az": 143568,
+    "bb": 143541,
+    "bd": 143490,
+    "be": 143446,
+    "bg": 143526,
+    "bh": 143559,
+    "bm": 143542,
+    "bn": 143560,
+    "bo": 143556,
+    "br": 143503,
+    "bs": 143539,
+    "bw": 143525,
+    "by": 143565,
+    "bz": 143555,
+    "ca": 143455,
+    "ch": 143459,
+    "ci": 143527,
+    "cl": 143483,
+    "cn": 143465,
+    "co": 143501,
+    "cr": 143495,
+    "cv": 143580,
+    "cy": 143557,
+    "cz": 143489,
+    "de": 143443,
+    "dk": 143458,
+    "dm": 143545,
+    "do": 143508,
+    "dz": 143563,
+    "ec": 143509,
+    "ee": 143518,
+    "eg": 143516,
+    "es": 143454,
+    "fi": 143447,
+    "fj": 143583,
+    "fm": 143591,
+    "fr": 143442,
+    "gb": 143444,
+    "gd": 143546,
+    "gh": 143573,
+    "gm": 143584,
+    "gr": 143448,
+    "gt": 143504,
+    "gw": 143585,
+    "gy": 143553,
+    "hk": 143463,
+    "hn": 143510,
+    "hr": 143494,
+    "hu": 143482,
+    "id": 143476,
+    "ie": 143449,
+    "il": 143491,
+    "in": 143467,
+    "is": 143558,
+    "it": 143450,
+    "jm": 143511,
+    "jo": 143528,
+    "jp": 143462,
+    "ke": 143529,
+    "kg": 143586,
+    "kh": 143579,
+    "kn": 143548,
+    "kr": 143466,
+    "kw": 143493,
+    "ky": 143544,
+    "kz": 143517,
+    "la": 143587,
+    "lb": 143497,
+    "lc": 143549,
+    "li": 143522,
+    "lk": 143486,
+    "lt": 143520,
+    "lu": 143451,
+    "lv": 143519,
+    "md": 143523,
+    "mg": 143531,
+    "mk": 143530,
+    "ml": 143532,
+    "mn": 143592,
+    "mo": 143515,
+    "ms": 143547,
+    "mt": 143521,
+    "mu": 143533,
+    "mv": 143488,
+    "mx": 143468,
+    "my": 143473,
+    "mz": 143593,
+    "na": 143594,
+    "ne": 143534,
+    "ng": 143561,
+    "ni": 143512,
+    "nl": 143452,
+    "no": 143457,
+    "np": 143484,
+    "nz": 143461,
+    "om": 143562,
+    "pa": 143485,
+    "pe": 143507,
+    "ph": 143474,
+    "pk": 143477,
+    "pl": 143478,
+    "pt": 143453,
+    "py": 143513,
+    "qa": 143498,
+    "ro": 143487,
+    "rs": 143500,
+    "ru": 143469,
+    "sa": 143479,
+    "se": 143456,
+    "sg": 143464,
+    "si": 143499,
+    "sk": 143496,
+    "sn": 143535,
+    "sr": 143554,
+    "sv": 143506,
+    "sz": 143602,
+    "tc": 143552,
+    "th": 143475,
+    "tj": 143603,
+    "tm": 143604,
+    "tn": 143536,
+    "tr": 143480,
+    "tt": 143551,
+    "tw": 143470,
+    "tz": 143572,
+    "ua": 143492,
+    "ug": 143537,
+    "us": 143441,
+    "uk": 143444,
+    "uy": 143514,
+    "uz": 143566,
+    "vc": 143550,
+    "ve": 143502,
+    "vg": 143543,
+    "vn": 143471,
+    "ye": 143571,
+    "za": 143472,
+    "zw": 143605,
 }
 REGIONS_TO_ALWAYS_CHECK = [
-    'us', 'gb', 'ca', 'cn', 'de', 'dk', 'es', 'fi', 'fr', 'it', 'jp', 'kr',
-    'nl', 'ru', 'sv', 'tw'
+    "us",
+    "gb",
+    "ca",
+    "cn",
+    "de",
+    "dk",
+    "es",
+    "fi",
+    "fr",
+    "it",
+    "jp",
+    "kr",
+    "nl",
+    "ru",
+    "sv",
+    "tw",
 ]
 
 CC_CHARACTERISTICS = {
@@ -125,7 +260,7 @@ async def query_itunes_api_async(session, storefront_id, search_terms):
             "utsk": "1fed679534b8ac2::::::b12ef8cda490576",
             "searchTerm": search_terms,
             "searchTermSource": "keyboard",
-            "v": "90"
+            "v": "90",
         }
 
         async with session.get(base_url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
@@ -174,8 +309,7 @@ async def parse_appletv_response_async(session, search_terms, storefront_id, tmd
                                 titles_to_check.append(TMDBMovie.sanitize(t.lower()))
 
                         title_fuzzy_similarity = max(
-                            fuzz.token_sort_ratio(title, item_title)
-                            for title in titles_to_check
+                            fuzz.token_sort_ratio(title, item_title) for title in titles_to_check
                         )
 
                         # check duration match - both must exist and be within 60 seconds
@@ -183,25 +317,29 @@ async def parse_appletv_response_async(session, search_terms, storefront_id, tmd
                             duration_diff = abs(tmdb_movie.duration - item_duration)
                         else:
                             # if either duration is missing, set a high penalty
-                            duration_diff = float('inf')
+                            duration_diff = float("inf")
 
                         year_diff = abs(item_year - tmdb_movie.year)
                         if not tmdb_movie.regions or len(tmdb_movie.regions) == 0:
                             if year_diff == 0 and title_fuzzy_similarity >= 95 and duration_diff <= 120:
-                                candidates.append({
-                                    'url': item.get("url"),
-                                    'similarity': title_fuzzy_similarity,
-                                    'year_diff': year_diff,
-                                    'duration_diff': duration_diff
-                                })
+                                candidates.append(
+                                    {
+                                        "url": item.get("url"),
+                                        "similarity": title_fuzzy_similarity,
+                                        "year_diff": year_diff,
+                                        "duration_diff": duration_diff,
+                                    }
+                                )
                         else:
                             if year_diff <= 1 and title_fuzzy_similarity > 92:
-                                candidates.append({
-                                    'url': item.get("url"),
-                                    'similarity': title_fuzzy_similarity,
-                                    'year_diff': year_diff,
-                                    'duration_diff': duration_diff
-                                })
+                                candidates.append(
+                                    {
+                                        "url": item.get("url"),
+                                        "similarity": title_fuzzy_similarity,
+                                        "year_diff": year_diff,
+                                        "duration_diff": duration_diff,
+                                    }
+                                )
 
         # return all candidates
         return candidates
@@ -271,9 +409,13 @@ async def get_appletv_url_async(tmdb_movie):
 
     # add 'and' variations if needed
     if " y " in tmdb_movie.title or " & " in tmdb_movie.title:
-        search_terms_list.append(TMDBMovie.sanitize(tmdb_movie.title.replace(" y ", " and ").replace(" & ", " and ")).lower())
+        search_terms_list.append(
+            TMDBMovie.sanitize(tmdb_movie.title.replace(" y ", " and ").replace(" & ", " and ")).lower()
+        )
     if " y " in tmdb_movie.original_title or " & " in tmdb_movie.original_title:
-        search_terms_list.append(TMDBMovie.sanitize(tmdb_movie.original_title.replace(" y ", " and ").replace(" & ", " and ")).lower())
+        search_terms_list.append(
+            TMDBMovie.sanitize(tmdb_movie.original_title.replace(" y ", " and ").replace(" & ", " and ")).lower()
+        )
 
     async with aiohttp.ClientSession() as session:
         # create tasks for all regions
@@ -292,8 +434,8 @@ async def get_appletv_url_async(tmdb_movie):
 
         # if we have candidates, sort them and return the best one
         if master_candidates:
-            master_candidates.sort(key=lambda x: (-x['similarity'], x['year_diff'], x['duration_diff']))
-            return master_candidates[0]['url']
+            master_candidates.sort(key=lambda x: (-x["similarity"], x["year_diff"], x["duration_diff"]))
+            return master_candidates[0]["url"]
 
     return None
 
@@ -308,6 +450,7 @@ def get_appletv_url(tmdb_movie):
         loop = asyncio.get_running_loop()
         # we're in an async context, need to run in a thread pool
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, get_appletv_url_async(tmdb_movie))
             return future.result()
@@ -363,7 +506,7 @@ async def fetch_binary_with_retry(session, url, max_retries=2, retry_delay=1.0):
         except Exception as e:
             if attempt == max_retries:
                 raise
-            wait_time = retry_delay * (2 ** attempt)
+            wait_time = retry_delay * (2**attempt)
             await asyncio.sleep(wait_time)
 
 
@@ -422,20 +565,17 @@ async def get_movie_data(session, storefront_id, movie_id):
                         playlists.append(hls_url)
 
         if playlists:
-            tasks = [
-                check_head_success(session, hls_url)
-                for hls_url in playlists
-            ]
+            tasks = [check_head_success(session, hls_url) for hls_url in playlists]
             results = await asyncio.gather(*tasks)
-            valid_playlists = [
-                url for url, ok in zip(playlists, results) if ok
-            ]
+            valid_playlists = [url for url, ok in zip(playlists, results) if ok]
             if valid_playlists:
-                itunes_playables.append({
-                    "name": playable.get("canonicalMetadata", {}).get("movieTitle", "Unknown"),
-                    "release_date": get_date_from_ts(playable.get("canonicalMetadata", {}).get("releaseDate")).year,
-                    "playlists": valid_playlists
-                })
+                itunes_playables.append(
+                    {
+                        "name": playable.get("canonicalMetadata", {}).get("movieTitle", "Unknown"),
+                        "release_date": get_date_from_ts(playable.get("canonicalMetadata", {}).get("releaseDate")).year,
+                        "playlists": valid_playlists,
+                    }
+                )
 
     return itunes_playables
 
@@ -472,13 +612,15 @@ def _extract_subtitle_media(playlist):
     for media in playlist.media:
         if media.type == "SUBTITLES" and media.uri:
             # add relevant data to each subtitle entry
-            subtitles.append({
-                "url": media.absolute_uri,
-                "language": media.language or "unknown",
-                "name": media.name or "Unknown",
-                "forced": media.forced == "YES",
-                "cc": _is_cc_from_characteristics(media.characteristics),
-            })
+            subtitles.append(
+                {
+                    "url": media.absolute_uri,
+                    "language": media.language or "unknown",
+                    "name": media.name or "Unknown",
+                    "forced": media.forced == "YES",
+                    "cc": _is_cc_from_characteristics(media.characteristics),
+                }
+            )
     return subtitles
 
 
@@ -492,9 +634,7 @@ async def find_subtitle_playlists(session, master_playlist_url):
 
     variant_urls = [variant.absolute_uri for variant in master_playlist.playlists]
 
-    variant_playlist_tasks = [
-        _fetch_and_parse_playlist(session, url) for url in variant_urls
-    ]
+    variant_playlist_tasks = [_fetch_and_parse_playlist(session, url) for url in variant_urls]
 
     variant_playlists = await asyncio.gather(*variant_playlist_tasks)
 
@@ -527,8 +667,7 @@ async def download_subtitle_segments(session, subtitle_playlist_url, output_path
 
     # download all segments concurrently
     tasks = [
-        fetch_binary_with_retry(session, segment.absolute_uri, max_retries=max_retries)
-        for segment in playlist.segments
+        fetch_binary_with_retry(session, segment.absolute_uri, max_retries=max_retries) for segment in playlist.segments
     ]
 
     try:
@@ -557,8 +696,8 @@ def merge_webvtt_segments(segments) -> bytes:
 
     for segment in segments:
         try:
-            text = segment.decode('utf-8')
-            lines = text.split('\n')
+            text = segment.decode("utf-8")
+            lines = text.split("\n")
 
             if first:
                 # keep entire first segment including header
@@ -573,11 +712,11 @@ def merge_webvtt_segments(segments) -> bytes:
 
                     # skip header lines
                     if not content_started:
-                        if stripped.startswith('WEBVTT'):
+                        if stripped.startswith("WEBVTT"):
                             continue
-                        elif stripped.startswith('X-TIMESTAMP-MAP'):
+                        elif stripped.startswith("X-TIMESTAMP-MAP"):
                             continue
-                        elif stripped == '':
+                        elif stripped == "":
                             continue
                         else:
                             # found actual content (timestamp or cue)
@@ -602,7 +741,7 @@ def merge_webvtt_segments(segments) -> bytes:
             cleaned_lines.append(line)
             previous_blank = False
 
-    return '\n'.join(cleaned_lines).encode('utf-8')
+    return "\n".join(cleaned_lines).encode("utf-8")
 
 
 async def get_unique_playlists_from_regions(session, base_url_data, regions):
@@ -630,7 +769,12 @@ async def get_unique_playlists_from_regions(session, base_url_data, regions):
         tasks.append(get_movie_data_safe(session, storefront_id, base_url_data["media_id"], country_code))
 
     # fetch all regions concurrently
-    with console.status(pluralize_numbers(f"[green][APPLE TV][/green] Fetching data from {len(regions)} region"), spinner="dots", spinner_style="white", speed=0.9):
+    with console.status(
+        pluralize_numbers(f"[green][APPLE TV][/green] Fetching data from {len(regions)} region"),
+        spinner="dots",
+        spinner_style="white",
+        speed=0.9,
+    ):
         results = await asyncio.gather(*tasks)
         # process results
         regions_with_data = 0
@@ -646,15 +790,20 @@ async def get_unique_playlists_from_regions(session, base_url_data, regions):
                         playlist_id = params.get("id", [None])[0]
                         if playlist_id and playlist_id not in seen_ids:
                             seen_ids.add(playlist_id)
-                            all_playlists.append({
-                                "url": playlist_url,
-                                "region": country_code,
-                                "movie_name": movie.get("name", "Unknown"),
-                                "movie_year": movie.get("release_date", "Unknown")
-                            })
+                            all_playlists.append(
+                                {
+                                    "url": playlist_url,
+                                    "region": country_code,
+                                    "movie_name": movie.get("name", "Unknown"),
+                                    "movie_year": movie.get("release_date", "Unknown"),
+                                }
+                            )
 
-    console.print(pluralize_numbers(
-        f"[green][APPLE TV][/green] Found [orange1]{len(all_playlists)}[/orange1] playlist across [orange1]{regions_with_data}[/orange1] region"))
+    console.print(
+        pluralize_numbers(
+            f"[green][APPLE TV][/green] Found [orange1]{len(all_playlists)}[/orange1] playlist across [orange1]{regions_with_data}[/orange1] region"
+        )
+    )
 
     return all_playlists
 
@@ -673,7 +822,7 @@ async def process_all_playlists(session, playlists, output_dir, movie):
         print("[yellow][APPLE TV][/yellow] No playlists provided to process")
         return
 
-   # get movie name and year
+    # get movie name and year
     safe_name = TMDBMovie.sanitize(movie.title).replace(" ", ".")
     safe_name = re.sub(r"\.+", ".", safe_name).strip(".")  # collapse multiple . characters into one
     safe_name = TMDBMovie.make_windows_safe(safe_name)
@@ -682,11 +831,13 @@ async def process_all_playlists(session, playlists, output_dir, movie):
     movie_dir = Path(output_dir)
     movie_dir.mkdir(parents=True, exist_ok=True)
 
-    with console.status(f"[green][APPLE TV][/green] Extracting subtitles from playlists", spinner="dots", spinner_style="white", speed=0.9):
-        tasks = [
-            find_subtitle_playlists(session, playlist["url"])
-            for playlist in playlists
-        ]
+    with console.status(
+        f"[green][APPLE TV][/green] Extracting subtitles from playlists",
+        spinner="dots",
+        spinner_style="white",
+        speed=0.9,
+    ):
+        tasks = [find_subtitle_playlists(session, playlist["url"]) for playlist in playlists]
         all_subtitles_results = await asyncio.gather(*tasks)
 
         all_subtitles = []
@@ -699,8 +850,14 @@ async def process_all_playlists(session, playlists, output_dir, movie):
                     all_subtitles.append(sub)
 
     if all_subtitles:
-        with console.status(pluralize_numbers(f"[green][APPLE TV][/green] Downloading [orange1]{len(all_subtitles)}[/orange1] subtitle from playlists"),
-                            spinner="dots", spinner_style="white", speed=0.9):
+        with console.status(
+            pluralize_numbers(
+                f"[green][APPLE TV][/green] Downloading [orange1]{len(all_subtitles)}[/orange1] subtitle from playlists"
+            ),
+            spinner="dots",
+            spinner_style="white",
+            speed=0.9,
+        ):
             # group by language
             lang_count = {}
             for sub in all_subtitles:
@@ -732,17 +889,13 @@ async def process_all_playlists(session, playlists, output_dir, movie):
                 # get a unique filename to prevent naming conflicts
                 output_path = subhelper.get_unique_filename(output_path, used_filenames)
 
-                subtitle_download_info.append({
-                    "subtitle": subtitle,
-                    "output_path": output_path,
-                    "idx": idx,
-                    "total": len(all_subtitles)
-                })
+                subtitle_download_info.append(
+                    {"subtitle": subtitle, "output_path": output_path, "idx": idx, "total": len(all_subtitles)}
+                )
 
             # create download tasks
             download_tasks = [
-                download_with_info(session, info["subtitle"], info["output_path"])
-                for info in subtitle_download_info
+                download_with_info(session, info["subtitle"], info["output_path"]) for info in subtitle_download_info
             ]
 
             # download all subs asynchronously
@@ -798,7 +951,9 @@ async def download_subs(appletv_url, output_dir, regions, movie):
     media_type = url_data["media_type"]
     media_id = url_data["media_id"]
     if media_type != "movie":
-        print(f"[red][APPLE TV][/red] Only movies are supported for scraping, (type attempted: [dodger_blue1]{media_type}[/dodger_blue1])")
+        print(
+            f"[red][APPLE TV][/red] Only movies are supported for scraping, (type attempted: [dodger_blue1]{media_type}[/dodger_blue1])"
+        )
         return False
 
     # download the subtitles asyncronously, limit connections so that the pool
@@ -812,7 +967,8 @@ async def download_subs(appletv_url, output_dir, regions, movie):
             # if not playlists:
             if not playlists:
                 print(
-                    f"[yellow][APPLE TV][/yellow] No .m3u8 playlists found in any region for URL: [dodger_blue1]{appletv_url}[/dodger_blue1]")
+                    f"[yellow][APPLE TV][/yellow] No .m3u8 playlists found in any region for URL: [dodger_blue1]{appletv_url}[/dodger_blue1]"
+                )
                 return False
 
             # Process all playlists and download subtitles

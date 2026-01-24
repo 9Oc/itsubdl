@@ -1,11 +1,12 @@
 import re
-import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from rich import print
-from simplejustwatchapi.justwatch import search, details
 
-from itsubdl.tmdbmovie import TMDBMovie
+import requests
+from rich import print
+from simplejustwatchapi.justwatch import details, search
+
 from itsubdl.config_manager import get_tmdb_api_key
+from itsubdl.tmdbmovie import TMDBMovie
 
 # match tv.apple.com movie URLs
 ATV_URL_REGEX = re.compile(
@@ -67,7 +68,7 @@ def get_tmdbmovie(movie_id: str) -> TMDBMovie | None:
                 r = requests.get(url, params=params, timeout=timeout)
                 r.raise_for_status()
                 return r
-            except Exception as e:
+            except Exception:
                 if attempt == retries:
                     # print(f"[yellow][TMDB][/yellow] TMDB API failed, re-sending request")
                     raise
@@ -95,7 +96,7 @@ def get_tmdbmovie(movie_id: str) -> TMDBMovie | None:
         release_date = j.get("release_date") or j.get("first_air_date") or None
         year = None
         if release_date:
-            match = re.match(r'(\d{4})', release_date)
+            match = re.match(r"(\d{4})", release_date)
             if match:
                 year = int(match.group(1))
 
@@ -110,10 +111,12 @@ def get_tmdbmovie(movie_id: str) -> TMDBMovie | None:
                 continue
 
             region = t.get("iso_3166_1").lower()
-            alternative_titles.append({
-                "region": region,
-                "title": alt_title,
-            })
+            alternative_titles.append(
+                {
+                    "region": region,
+                    "title": alt_title,
+                }
+            )
         regions = get_apple_tv_regions(movie_id)
         # move us, gb, ca to the front
         priority = ["us", "gb", "ca", "au"]
@@ -139,10 +142,10 @@ def get_tmdbmovie(movie_id: str) -> TMDBMovie | None:
             year=year,
             duration=duration,
             regions=list(sorted_regions.keys()),
-            watch_links=list(sorted_regions.values())
+            watch_links=list(sorted_regions.values()),
         )
 
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -163,7 +166,7 @@ def get_apple_tv_regions(tmdb_id: str) -> dict:
             rent_list = info.get("rent", [])
 
             for item in buy_list + rent_list:
-                if item.get("provider_name") == "Apple TV":
+                if "apple tv" in item.get("provider_name").lower():
                     found_regions[region_code.lower()] = info.get("link")
                     break
 
@@ -244,23 +247,19 @@ def get_appletv_url(movie: TMDBMovie, max_workers: int = 5) -> str | None:
         movie: TMDBMovie object with regions list
         max_workers: Maximum number of parallel threads (default: 5)
     """
-    if not movie or not movie.regions:
+    if movie is None or len(movie.regions) == 0:
         return None
 
     checked_node_ids = set()
 
     with ThreadPoolExecutor(max_workers=max_workers) as node_executor:
         # submit all region searches for node_ids
-        node_futures = {
-            node_executor.submit(get_justwatch_node_id, movie, region): region
-            for region in movie.regions
-        }
+        node_futures = {node_executor.submit(get_justwatch_node_id, movie, region): region for region in movie.regions}
 
         # process node_id results as they complete
         for node_future in as_completed(node_futures):
             try:
                 node_id = node_future.result()
-
                 # skip if no node_id or already checked this one
                 if not node_id or node_id in checked_node_ids:
                     continue

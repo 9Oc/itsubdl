@@ -9,13 +9,13 @@ import aiohttp
 from rich.console import Console
 
 from itsubdl import appletv, tmdb
-from itsubdl.pluralize import pluralize_numbers
 from itsubdl.config_manager import (
     ensure_config_exists,
     get_output_directory,
-    update_tmdb_api_key,
     update_output_directory,
+    update_tmdb_api_key,
 )
+from itsubdl.pluralize import pluralize_numbers
 from itsubdl.subtitle import subdeduper, subhelper
 from itsubdl.tmdbmovie import TMDBMovie
 
@@ -41,7 +41,7 @@ def get_alpha_folder(title: str) -> str:
     base_char = normalized[0].upper()
 
     # Check if it's A-Z
-    if base_char.isalpha() and 'A' <= base_char <= 'Z':
+    if base_char.isalpha() and "A" <= base_char <= "Z":
         return base_char
 
     return SPECIAL_BUCKET
@@ -49,7 +49,7 @@ def get_alpha_folder(title: str) -> str:
 
 def create_movie_folder(base_dir: str | Path, title: str, year: str | int, movie_id: str | int) -> Path:
     # sanitize title for filesystem
-    safe_title = re.sub(r'[\/\\\:\*\?"<>\|]+', '', title).strip()
+    safe_title = re.sub(r'[\/\\\:\*\?"<>\|]+', "", title).strip()
     safe_title = TMDBMovie.make_windows_safe_folder(safe_title)
 
     # get the alphabetical parent folder
@@ -104,22 +104,10 @@ def move_srt_files_to_folder(directory: Path, destination: Path) -> list[Path]:
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Download subtitles from Apple TV using TMDB data or Apple TV URLs"
-    )
-    parser.add_argument(
-        "input",
-        nargs="?",
-        help="TMDB ID or Apple TV URL to download subtitles for"
-    )
-    parser.add_argument(
-        "--tmdb-api-key",
-        help="Update the TMDB API key in config"
-    )
-    parser.add_argument(
-        "--output-dir",
-        help="Update the output directory in config"
-    )
+    parser = argparse.ArgumentParser(description="Download subtitles from Apple TV using TMDB data or Apple TV URLs")
+    parser.add_argument("input", nargs="?", help="TMDB ID or Apple TV URL to download subtitles for")
+    parser.add_argument("--tmdb-api-key", help="Update the TMDB API key in config")
+    parser.add_argument("--output-dir", help="Update the output directory in config")
     return parser.parse_args()
 
 
@@ -132,7 +120,6 @@ async def main(input_arg: str | None = None):
       then call `appletv.download_subs` with it.
     - Otherwise treat `input_arg` as a TMDB id and use existing TMDB flow.
     """
-
     args = parse_args()
 
     if args.tmdb_api_key or args.output_dir:
@@ -169,7 +156,9 @@ async def main(input_arg: str | None = None):
                 return
 
         if not playables:
-            console.print(f"[yellow][APPLE TV][/yellow] No iTunes playables found for: [dodger_blue1]{input_arg}[/dodger_blue1]")
+            console.print(
+                f"[yellow][APPLE TV][/yellow] No iTunes playables found for: [dodger_blue1]{input_arg}[/dodger_blue1]"
+            )
             return
 
         # prefer the first playable
@@ -177,12 +166,16 @@ async def main(input_arg: str | None = None):
         title = playable.get("name") or "Unknown"
         year = playable.get("release_date") or None
 
-        with console.status(f"[green][TMDB][/green] Searching TMDB for movie: {title} ({year})",
-                            spinner="dots", spinner_style="white", speed=0.9):
+        with console.status(
+            f"[green][TMDB][/green] Searching TMDB for movie: {title} ({year})",
+            spinner="dots",
+            spinner_style="white",
+            speed=0.9,
+        ):
             # search TMDB using the title and year from Apple TV
             movie = tmdb.search_tmdb_movie(title, year)
         if not movie:
-            console.print(f"[yellow][APPLE TV][/yellow] Could not find TMDB match.")
+            console.print("[yellow][APPLE TV][/yellow] Could not find TMDB match.")
             console.print(f"[yellow][APPLE TV][/yellow] Using Apple TV metadata: {title} ({year}).")
             # Fall back to minimal movie object
             movie = TMDBMovie(
@@ -198,24 +191,37 @@ async def main(input_arg: str | None = None):
             )
         else:
             console.print(
-                f"[green][TMDB][/green] Successfully built TMDBMovie object: {movie.title} ({movie.year}) [{movie.id}]")
+                f"[green][TMDB][/green] Successfully built TMDBMovie object: {movie.title} ({movie.year}) [{movie.id}]"
+            )
 
         atvp_url = input_arg
     else:
         # otherwise, assume TMDB id
         tmdb_id = str(input_arg)
-        with console.status(f"[green][TMDB][/green] Requesting TMDB metadata for ID: [sea_green2]{tmdb_id}[/sea_green2]",
-                            spinner="dots", spinner_style="white", speed=0.9):
+        with console.status(
+            f"[green][TMDB][/green] Requesting TMDB metadata for ID: [sea_green2]{tmdb_id}[/sea_green2]",
+            spinner="dots",
+            spinner_style="white",
+            speed=0.9,
+        ):
             movie = tmdb.get_tmdbmovie(tmdb_id)
         if not movie:
-            console.print(f"[yellow][TMDB] Could not fetch TMDB metadata for ID:[/yellow] [sea_green2]{tmdb_id}[/sea_green2]")
+            console.print(
+                f"[yellow][TMDB] Could not fetch TMDB metadata for ID:[/yellow] [sea_green2]{tmdb_id}[/sea_green2]"
+            )
             return
 
-        console.print(f"[green][TMDB][/green] Successfully built TMDBMovie object: {movie.title} ({movie.year}) [{movie.id}]")
-        with console.status(f"[green][JUSTWATCH][/green] Searching for Apple TV URL", spinner="dots", spinner_style="white", speed=0.9):
+        console.print(
+            f"[green][TMDB][/green] Successfully built TMDBMovie object: {movie.title} ({movie.year}) [{movie.id}]"
+        )
+        with console.status(
+            "[green][JUSTWATCH][/green] Searching for Apple TV URL", spinner="dots", spinner_style="white", speed=0.9
+        ):
             atvp_url = tmdb.get_appletv_url(movie)
         if not atvp_url:
-            console.print(f"[yellow][JUSTWATCH][/yellow] Could not find Apple TV URL for TMDB ID [orange1]{tmdb_id}[/orange1]")
+            console.print(
+                f"[yellow][JUSTWATCH][/yellow] Could not find Apple TV URL for TMDB ID [orange1]{tmdb_id}[/orange1]"
+            )
             return
         console.print(f"[green][JUSTWATCH][/green] Found Apple TV URL: [dodger_blue1]{atvp_url}[/dodger_blue1]")
 
@@ -225,13 +231,23 @@ async def main(input_arg: str | None = None):
 
     vtt_files = subhelper.get_subtitle_files(temp_download_dir, "vtt")
     if len(vtt_files) > 0:
-        console.print(pluralize_numbers(f"[green][APPLE TV][/green] Finished downloading [orange1]{len(vtt_files)}[/orange1] subtitle"))
-    with console.status(f"[green][CLEANUP][/green] Running cleanup tasks", spinner="dots", spinner_style="white", speed=0.9):
+        console.print(
+            pluralize_numbers(
+                f"[green][APPLE TV][/green] Finished downloading [orange1]{len(vtt_files)}[/orange1] subtitle"
+            )
+        )
+    with console.status(
+        "[green][CLEANUP][/green] Running cleanup tasks", spinner="dots", spinner_style="white", speed=0.9
+    ):
         md5_deduped, fuzzy_deduped, forced_deduped = subdeduper.dedupe(temp_download_dir)
     if len(md5_deduped) > 0:
-        console.print(pluralize_numbers(f"[green][CLEANUP][/green] [orange1]{len(md5_deduped)}[/orange1] file MD5 hash deduped"))
+        console.print(
+            pluralize_numbers(f"[green][CLEANUP][/green] [orange1]{len(md5_deduped)}[/orange1] file MD5 hash deduped")
+        )
     if len(fuzzy_deduped) > 0:
-        console.print(pluralize_numbers(f"[green][CLEANUP][/green] [orange1]{len(fuzzy_deduped)}[/orange1] file fuzzy deduped"))
+        console.print(
+            pluralize_numbers(f"[green][CLEANUP][/green] [orange1]{len(fuzzy_deduped)}[/orange1] file fuzzy deduped")
+        )
     if len(forced_deduped) > 0:
         console.print(f"[green][CLEANUP][/green] [orange1]{len(forced_deduped)}[/orange1] forced subtitles deduped")
 
@@ -243,10 +259,14 @@ async def main(input_arg: str | None = None):
         itunes_folder.mkdir(parents=True, exist_ok=True)
 
         moved = move_srt_files_to_folder(temp_download_dir, itunes_folder)
-        console.print(pluralize_numbers(
-            f"[green][CLEANUP][/green] Moved [orange1]{len(moved)}[/orange1] file to [dodger_blue1]{itunes_folder}[/dodger_blue1]"))
+        console.print(
+            pluralize_numbers(
+                f"[green][CLEANUP][/green] Moved [orange1]{len(moved)}[/orange1] file to [dodger_blue1]{itunes_folder}[/dodger_blue1]"
+            )
+        )
 
     shutil.rmtree(temp_download_dir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
