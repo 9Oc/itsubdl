@@ -797,9 +797,8 @@ async def download_subtitle_segments(
 
     try:
         segments_data = await asyncio.gather(*tasks)
-    except Exception as e:
-        # print(f"Failed to download segments: {e}")
-        return False
+     except Exception as e:
+         return False
 
     # merge webvtt segments
     merged_content = merge_webvtt_segments(segments_data)
@@ -850,9 +849,8 @@ def merge_webvtt_segments(segments) -> bytes:
                     if content_started:
                         merged_lines.append(line)
 
-        except Exception:
-            print(f"debug: Failed to decode segment: {segment}")
-            continue
+         except Exception:
+             continue
 
     cleaned_lines = []
     previous_blank = False

@@ -54,10 +54,8 @@ def create_movie_folder(
     safe_title = re.sub(r'[\/\\\:\*\?"<>\|]+', "", title).strip()
     safe_title = TMDBMovie.make_windows_safe_folder(safe_title)
 
-    # get the alphabetical parent folder
-    # alpha_folder = get_alpha_folder(title)
-
-    folder_name = f"{safe_title} ({year})"
+     # get the alphabetical parent folder
+     folder_name = f"{safe_title} ({year})"
     if movie_id:
         folder_name += f" [{movie_id}]"
     path = Path(base_dir) / folder_name
