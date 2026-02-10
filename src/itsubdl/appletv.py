@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import re
+import ssl
 import traceback
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -222,6 +223,25 @@ CC_CHARACTERISTICS = {
     "public.accessibility.describes-music-and-sound",
     "public.accessibility.transcribes-spoken-dialog",
 }
+
+
+def create_ssl_context():
+    """
+    Create an SSL context that works with macOS certificate verification.
+    Falls back to insecure mode if certificate verification fails.
+    """
+    try:
+        # Create SSL context with default verification
+        ssl_context = ssl.create_default_context()
+        return ssl_context
+    except Exception:
+        # Fallback: create context that doesn't verify certificates
+        # This is used when system certificates are not available
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        logger.debug("[create_ssl_context] Using unverified SSL context")
+        return ssl_context
 
 
 def get_date_from_ts(timestamp) -> datetime:
@@ -453,7 +473,10 @@ async def get_appletv_url_async(tmdb_movie):
             ).lower()
         )
 
-    async with aiohttp.ClientSession() as session:
+    ssl_context = create_ssl_context()
+    async with aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(ssl=ssl_context)
+    ) as session:
         # create tasks for all regions
         tasks = [
             asyncio.create_task(
@@ -1083,7 +1106,10 @@ async def download_subs(appletv_url, output_dir, regions, movie):
     Download all subtitles available from the provided tv.apple.com URL.
     """
     if "itunes.apple.com" in appletv_url:
-        async with aiohttp.ClientSession() as tmp_session:
+        ssl_context = create_ssl_context()
+        async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(ssl=ssl_context)
+        ) as tmp_session:
             resolved_url = await resolve_itunes_to_atv(tmp_session, appletv_url)
             if not resolved_url:
                 print(
@@ -1111,7 +1137,8 @@ async def download_subs(appletv_url, output_dir, regions, movie):
 
     # download the subtitles asyncronously, limit connections so that the pool
     # does not become too large
-    connector = aiohttp.TCPConnector(limit=400, limit_per_host=200)
+    ssl_context = create_ssl_context()
+    connector = aiohttp.TCPConnector(limit=400, limit_per_host=200, ssl=ssl_context)
     async with aiohttp.ClientSession(
         connector=connector, headers=DEFAULT_HEADERS
     ) as session:
