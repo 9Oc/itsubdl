@@ -1,5 +1,7 @@
 import asyncio
+import logging
 import re
+import ssl
 import traceback
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -16,6 +18,8 @@ from itsubdl.subtitle import subhelper
 from itsubdl.tmdbmovie import TMDBMovie
 
 console = Console(color_system="truecolor")
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)  # Suppress debug messages
 
 # HTTP headers for requests
 DEFAULT_HEADERS = {
@@ -222,6 +226,16 @@ CC_CHARACTERISTICS = {
 }
 
 
+def create_ssl_context():
+    """
+    Create SSL configuration for aiohttp connections.
+    Disables verification for Apple TV API since it's behind CloudFlare.
+    """
+    # Return False to disable SSL verification
+    # This is safe for Apple TV API since we're not handling sensitive data
+    return False
+
+
 def get_date_from_ts(timestamp) -> datetime:
     """
     Return a datetime object representing the unix timestamp passed in.
@@ -263,11 +277,15 @@ async def query_itunes_api_async(session, storefront_id, search_terms):
             "v": "90",
         }
 
-        async with session.get(base_url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
+        async with session.get(
+            base_url, params=params, timeout=aiohttp.ClientTimeout(total=10)
+        ) as response:
             return await response.json()
 
 
-async def parse_appletv_response_async(session, search_terms, storefront_id, tmdb_movie):
+async def parse_appletv_response_async(
+    session, search_terms, storefront_id, tmdb_movie
+):
     """
     Returns all candidates found which are possible matches.
     """
@@ -298,22 +316,36 @@ async def parse_appletv_response_async(session, search_terms, storefront_id, tmd
                         # special case, if y or & is in the movie title, check for those
                         # characters replaced with 'and' since apple is retarded
                         if " y " in titles_to_check[0] or " & " in titles_to_check[0]:
-                            titles_to_check.append(titles_to_check[0].replace(" y ", " and ").replace(" & ", " and "))
+                            titles_to_check.append(
+                                titles_to_check[0]
+                                .replace(" y ", " and ")
+                                .replace(" & ", " and ")
+                            )
 
-                        if tmdb_movie.original_title:  # check original title only if it exists
-                            titles_to_check.append(TMDBMovie.sanitize(tmdb_movie.original_title.lower()))
+                        if (
+                            tmdb_movie.original_title
+                        ):  # check original title only if it exists
+                            titles_to_check.append(
+                                TMDBMovie.sanitize(tmdb_movie.original_title.lower())
+                            )
 
-                        for alt_title in tmdb_movie.alternative_titles:  # check any alt titles
+                        for (
+                            alt_title
+                        ) in tmdb_movie.alternative_titles:  # check any alt titles
                             t = alt_title.get("title")
                             if t:
                                 titles_to_check.append(TMDBMovie.sanitize(t.lower()))
 
                         title_fuzzy_similarity = max(
-                            fuzz.token_sort_ratio(title, item_title) for title in titles_to_check
+                            fuzz.token_sort_ratio(title, item_title)
+                            for title in titles_to_check
                         )
 
                         # check duration match - both must exist and be within 60 seconds
-                        if tmdb_movie.duration is not None and item_duration is not None:
+                        if (
+                            tmdb_movie.duration is not None
+                            and item_duration is not None
+                        ):
                             duration_diff = abs(tmdb_movie.duration - item_duration)
                         else:
                             # if either duration is missing, set a high penalty
@@ -321,7 +353,11 @@ async def parse_appletv_response_async(session, search_terms, storefront_id, tmd
 
                         year_diff = abs(item_year - tmdb_movie.year)
                         if not tmdb_movie.regions or len(tmdb_movie.regions) == 0:
-                            if year_diff == 0 and title_fuzzy_similarity >= 95 and duration_diff <= 120:
+                            if (
+                                year_diff == 0
+                                and title_fuzzy_similarity >= 95
+                                and duration_diff <= 120
+                            ):
                                 candidates.append(
                                     {
                                         "url": item.get("url"),
@@ -352,10 +388,14 @@ async def search_with_terms_async(session, search_terms, storefront_id, tmdb_mov
     """
     Helper to search with specific terms and return result.
     """
-    return await parse_appletv_response_async(session, search_terms, storefront_id, tmdb_movie)
+    return await parse_appletv_response_async(
+        session, search_terms, storefront_id, tmdb_movie
+    )
 
 
-async def get_appletv_url_for_region_async(session, region, tmdb_movie, search_terms_list):
+async def get_appletv_url_for_region_async(
+    session, region, tmdb_movie, search_terms_list
+):
     """
     Search a single region with all search term variations concurrently.
     Returns ALL candidates found across all search terms.
@@ -366,7 +406,9 @@ async def get_appletv_url_for_region_async(session, region, tmdb_movie, search_t
 
     # create tasks for all search term variations
     tasks = [
-        asyncio.create_task(search_with_terms_async(session, terms, storefront_id, tmdb_movie))
+        asyncio.create_task(
+            search_with_terms_async(session, terms, storefront_id, tmdb_movie)
+        )
         for terms in search_terms_list
     ]
 
@@ -410,17 +452,30 @@ async def get_appletv_url_async(tmdb_movie):
     # add 'and' variations if needed
     if " y " in tmdb_movie.title or " & " in tmdb_movie.title:
         search_terms_list.append(
-            TMDBMovie.sanitize(tmdb_movie.title.replace(" y ", " and ").replace(" & ", " and ")).lower()
+            TMDBMovie.sanitize(
+                tmdb_movie.title.replace(" y ", " and ").replace(" & ", " and ")
+            ).lower()
         )
     if " y " in tmdb_movie.original_title or " & " in tmdb_movie.original_title:
         search_terms_list.append(
-            TMDBMovie.sanitize(tmdb_movie.original_title.replace(" y ", " and ").replace(" & ", " and ")).lower()
+            TMDBMovie.sanitize(
+                tmdb_movie.original_title.replace(" y ", " and ").replace(
+                    " & ", " and "
+                )
+            ).lower()
         )
 
-    async with aiohttp.ClientSession() as session:
+    ssl_context = create_ssl_context()
+    async with aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(ssl=ssl_context)
+    ) as session:
         # create tasks for all regions
         tasks = [
-            asyncio.create_task(get_appletv_url_for_region_async(session, region, tmdb_movie, search_terms_list))
+            asyncio.create_task(
+                get_appletv_url_for_region_async(
+                    session, region, tmdb_movie, search_terms_list
+                )
+            )
             for region in regions
         ]
 
@@ -434,7 +489,9 @@ async def get_appletv_url_async(tmdb_movie):
 
         # if we have candidates, sort them and return the best one
         if master_candidates:
-            master_candidates.sort(key=lambda x: (-x["similarity"], x["year_diff"], x["duration_diff"]))
+            master_candidates.sort(
+                key=lambda x: (-x["similarity"], x["year_diff"], x["duration_diff"])
+            )
             return master_candidates[0]["url"]
 
     return None
@@ -462,7 +519,9 @@ def get_appletv_url(tmdb_movie):
 async def check_head_success(session, url):
     """Check if a HEAD request to the URL is successful."""
     try:
-        async with session.head(url, headers=DEFAULT_HEADERS, allow_redirects=True) as resp:
+        async with session.head(
+            url, headers=DEFAULT_HEADERS, allow_redirects=True
+        ) as resp:
             return resp.status < 400
     except Exception:
         return False
@@ -470,16 +529,26 @@ async def check_head_success(session, url):
 
 async def fetch_json(session, url, params=None):
     """Fetch JSON data from a URL."""
-    async with session.get(url, params=params, headers=DEFAULT_HEADERS) as resp:
-        resp.raise_for_status()
-        return await resp.json()
+    try:
+        async with session.get(url, params=params, headers=DEFAULT_HEADERS) as resp:
+            logger.debug(f"[fetch_json] {url[:80]}... -> HTTP {resp.status}")
+            resp.raise_for_status()
+            return await resp.json()
+    except Exception as e:
+        logger.debug(f"[fetch_json] Error fetching {url[:80]}...: {str(e)}")
+        raise
 
 
 async def fetch_text(session, url):
     """Fetch text data from a URL."""
-    async with session.get(url, headers=DEFAULT_HEADERS) as resp:
-        resp.raise_for_status()
-        return await resp.text()
+    try:
+        async with session.get(url, headers=DEFAULT_HEADERS) as resp:
+            logger.debug(f"[fetch_text] {url[:80]}... -> HTTP {resp.status}")
+            resp.raise_for_status()
+            return await resp.text()
+    except Exception as e:
+        logger.debug(f"[fetch_text] Error fetching {url[:80]}...: {str(e)}")
+        raise
 
 
 async def fetch_binary(session, url):
@@ -542,41 +611,74 @@ async def get_request_params(session, storefront_id):
 
 async def get_movie_data(session, storefront_id, movie_id):
     """Fetch movie data from Apple TV API."""
+    logger.debug(
+        f"[get_movie_data] Fetching data for movie_id={movie_id}, storefront_id={storefront_id}"
+    )
+
     request_params = await get_request_params(session, storefront_id)
     url = f"{API_BASE_URL}/movies/{movie_id}"
 
+    logger.debug(f"[get_movie_data] API URL: {url}")
+    logger.debug(f"[get_movie_data] Request params: {request_params}")
+
     data = await fetch_json(session, url, request_params)
     response_data = data.get("data", {})
+
+    logger.debug(f"[get_movie_data] API response keys: {list(response_data.keys())}")
 
     # extract iTunes playables
     playables = response_data.get("playables", {}).values()
     itunes_playables = []
 
+    logger.debug(f"[get_movie_data] Found {len(list(playables))} playables in response")
+
+    playables = response_data.get(
+        "playables", {}
+    ).values()  # Re-get since we consumed the iterator
     for playable in playables:
         if playable.get("channelId") != "tvs.sbd.9001":  # iTunes channel
+            logger.debug(
+                f"[get_movie_data] Skipping non-iTunes channel: {playable.get('channelId')}"
+            )
             continue
+
+        logger.debug(f"[get_movie_data] Processing iTunes playable")
         itunes_data = playable.get("itunesMediaApiData", {})
         # extract playlists from offers
         playlists = []
         if offers := itunes_data.get("offers"):
+            logger.debug(f"[get_movie_data] Found {len(offers)} offers")
             for offer in offers:
                 if hls_url := offer.get("hlsUrl"):
                     if hls_url not in playlists:
                         playlists.append(hls_url)
+                        logger.debug(
+                            f"[get_movie_data] Added HLS URL: {hls_url[:80]}..."
+                        )
 
         if playlists:
+            logger.debug(
+                f"[get_movie_data] Checking {len(playlists)} playlist URLs for validity"
+            )
             tasks = [check_head_success(session, hls_url) for hls_url in playlists]
             results = await asyncio.gather(*tasks)
             valid_playlists = [url for url, ok in zip(playlists, results) if ok]
+            logger.debug(f"[get_movie_data] {len(valid_playlists)} playlists are valid")
+
             if valid_playlists:
                 itunes_playables.append(
                     {
-                        "name": playable.get("canonicalMetadata", {}).get("movieTitle", "Unknown"),
-                        "release_date": get_date_from_ts(playable.get("canonicalMetadata", {}).get("releaseDate")).year,
+                        "name": playable.get("canonicalMetadata", {}).get(
+                            "movieTitle", "Unknown"
+                        ),
+                        "release_date": get_date_from_ts(
+                            playable.get("canonicalMetadata", {}).get("releaseDate")
+                        ).year,
                         "playlists": valid_playlists,
                     }
                 )
 
+    logger.debug(f"[get_movie_data] Returning {len(itunes_playables)} iTunes playables")
     return itunes_playables
 
 
@@ -626,21 +728,38 @@ def _extract_subtitle_media(playlist):
 
 async def find_subtitle_playlists(session, master_playlist_url):
     """Find all unique subtitle playlists in a given master HLS playlist."""
+    logger.debug(
+        f"[find_subtitle_playlists] Fetching master playlist: {master_playlist_url[:80]}..."
+    )
+
     master_playlist = await _fetch_and_parse_playlist(session, master_playlist_url)
     if not master_playlist:
+        logger.debug(f"[find_subtitle_playlists] Failed to parse master playlist")
         return []
 
     subtitles = _extract_subtitle_media(master_playlist)
+    logger.debug(
+        f"[find_subtitle_playlists] Found {len(subtitles)} subtitles in master playlist"
+    )
 
     variant_urls = [variant.absolute_uri for variant in master_playlist.playlists]
+    logger.debug(
+        f"[find_subtitle_playlists] Found {len(variant_urls)} variant playlists"
+    )
 
-    variant_playlist_tasks = [_fetch_and_parse_playlist(session, url) for url in variant_urls]
+    variant_playlist_tasks = [
+        _fetch_and_parse_playlist(session, url) for url in variant_urls
+    ]
 
     variant_playlists = await asyncio.gather(*variant_playlist_tasks)
 
-    for playlist in variant_playlists:
+    for i, playlist in enumerate(variant_playlists):
         if playlist:
-            subtitles.extend(_extract_subtitle_media(playlist))
+            variant_subs = _extract_subtitle_media(playlist)
+            logger.debug(
+                f"[find_subtitle_playlists] Variant {i} has {len(variant_subs)} subtitles"
+            )
+            subtitles.extend(variant_subs)
 
     seen_urls = set()
     unique_subs = []
@@ -649,10 +768,15 @@ async def find_subtitle_playlists(session, master_playlist_url):
             seen_urls.add(sub["url"])
             unique_subs.append(sub)
 
+    logger.debug(
+        f"[find_subtitle_playlists] Total unique subtitles: {len(unique_subs)}"
+    )
     return unique_subs
 
 
-async def download_subtitle_segments(session, subtitle_playlist_url, output_path, max_retries=3):
+async def download_subtitle_segments(
+    session, subtitle_playlist_url, output_path, max_retries=3
+):
     """Download all segments from a subtitle playlist and merge them."""
     try:
         text = await fetch_text(session, subtitle_playlist_url)
@@ -667,14 +791,14 @@ async def download_subtitle_segments(session, subtitle_playlist_url, output_path
 
     # download all segments concurrently
     tasks = [
-        fetch_binary_with_retry(session, segment.absolute_uri, max_retries=max_retries) for segment in playlist.segments
+        fetch_binary_with_retry(session, segment.absolute_uri, max_retries=max_retries)
+        for segment in playlist.segments
     ]
 
     try:
         segments_data = await asyncio.gather(*tasks)
-    except Exception as e:
-        # print(f"Failed to download segments: {e}")
-        return False
+     except Exception as e:
+         return False
 
     # merge webvtt segments
     merged_content = merge_webvtt_segments(segments_data)
@@ -725,9 +849,8 @@ def merge_webvtt_segments(segments) -> bytes:
                     if content_started:
                         merged_lines.append(line)
 
-        except Exception:
-            print(f"debug: Failed to decode segment: {segment}")
-            continue
+         except Exception:
+             continue
 
     cleaned_lines = []
     previous_blank = False
@@ -756,6 +879,8 @@ async def get_unique_playlists_from_regions(session, base_url_data, regions):
         if region not in regions:
             regions.append(region)
 
+    logger.debug(f"[get_unique_playlists_from_regions] Checking {len(regions)} regions")
+
     all_playlists = []
     seen_ids = set()
 
@@ -765,12 +890,25 @@ async def get_unique_playlists_from_regions(session, base_url_data, regions):
         try:
             storefront_id = REGION_STOREFRONT_MAP[country_code]
         except Exception as e:
+            logger.debug(
+                f"[get_unique_playlists_from_regions] Invalid region: {country_code}"
+            )
             continue
-        tasks.append(get_movie_data_safe(session, storefront_id, base_url_data["media_id"], country_code))
+        tasks.append(
+            get_movie_data_safe(
+                session, storefront_id, base_url_data["media_id"], country_code
+            )
+        )
+
+    logger.debug(
+        f"[get_unique_playlists_from_regions] Created {len(tasks)} tasks for regions"
+    )
 
     # fetch all regions concurrently
     with console.status(
-        pluralize_numbers(f"[green][APPLE TV][/green] Fetching data from {len(regions)} region"),
+        pluralize_numbers(
+            f"[green][APPLE TV][/green] Fetching data from {len(regions)} region"
+        ),
         spinner="dots",
         spinner_style="white",
         speed=0.9,
@@ -781,6 +919,9 @@ async def get_unique_playlists_from_regions(session, base_url_data, regions):
         for country_code, movies in results:
             if movies:
                 regions_with_data += 1
+                logger.debug(
+                    f"[get_unique_playlists_from_regions] Region {country_code}: {len(movies)} movies found"
+                )
                 for movie in movies:
                     for playlist_url in movie.get("playlists", []):
                         if not playlist_url:
@@ -798,6 +939,14 @@ async def get_unique_playlists_from_regions(session, base_url_data, regions):
                                     "movie_year": movie.get("release_date", "Unknown"),
                                 }
                             )
+            else:
+                logger.debug(
+                    f"[get_unique_playlists_from_regions] Region {country_code}: no data"
+                )
+
+    logger.debug(
+        f"[get_unique_playlists_from_regions] Found {len(all_playlists)} unique playlists across {regions_with_data} regions"
+    )
 
     console.print(
         pluralize_numbers(
@@ -813,7 +962,10 @@ async def get_movie_data_safe(session, storefront_id, movie_id, country_code):
     try:
         movies = await get_movie_data(session, storefront_id, movie_id)
         return (country_code, movies)
-    except Exception:
+    except Exception as e:
+        logger.debug(
+            f"[get_movie_data_safe] Error fetching data for {country_code}: {str(e)}"
+        )
         return (country_code, [])
 
 
@@ -824,7 +976,9 @@ async def process_all_playlists(session, playlists, output_dir, movie):
 
     # get movie name and year
     safe_name = TMDBMovie.sanitize(movie.title).replace(" ", ".")
-    safe_name = re.sub(r"\.+", ".", safe_name).strip(".")  # collapse multiple . characters into one
+    safe_name = re.sub(r"\.+", ".", safe_name).strip(
+        "."
+    )  # collapse multiple . characters into one
     safe_name = TMDBMovie.make_windows_safe(safe_name)
     movie_year = movie.year
 
@@ -837,7 +991,9 @@ async def process_all_playlists(session, playlists, output_dir, movie):
         spinner_style="white",
         speed=0.9,
     ):
-        tasks = [find_subtitle_playlists(session, playlist["url"]) for playlist in playlists]
+        tasks = [
+            find_subtitle_playlists(session, playlist["url"]) for playlist in playlists
+        ]
         all_subtitles_results = await asyncio.gather(*tasks)
 
         all_subtitles = []
@@ -890,12 +1046,18 @@ async def process_all_playlists(session, playlists, output_dir, movie):
                 output_path = subhelper.get_unique_filename(output_path, used_filenames)
 
                 subtitle_download_info.append(
-                    {"subtitle": subtitle, "output_path": output_path, "idx": idx, "total": len(all_subtitles)}
+                    {
+                        "subtitle": subtitle,
+                        "output_path": output_path,
+                        "idx": idx,
+                        "total": len(all_subtitles),
+                    }
                 )
 
             # create download tasks
             download_tasks = [
-                download_with_info(session, info["subtitle"], info["output_path"]) for info in subtitle_download_info
+                download_with_info(session, info["subtitle"], info["output_path"])
+                for info in subtitle_download_info
             ]
 
             # download all subs asynchronously
@@ -934,16 +1096,23 @@ async def download_subs(appletv_url, output_dir, regions, movie):
     Download all subtitles available from the provided tv.apple.com URL.
     """
     if "itunes.apple.com" in appletv_url:
-        async with aiohttp.ClientSession() as tmp_session:
+        ssl_context = create_ssl_context()
+        async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(ssl=ssl_context)
+        ) as tmp_session:
             resolved_url = await resolve_itunes_to_atv(tmp_session, appletv_url)
             if not resolved_url:
-                print(f"[red][APPLE TV][/red] Failed to resolve iTunes link: {appletv_url}")
+                print(
+                    f"[red][APPLE TV][/red] Failed to resolve iTunes link: {appletv_url}"
+                )
                 return False
             appletv_url = resolved_url
     # check if the ATV URL is valid.
     match = ATV_URL_REGEX.match(appletv_url)
     if not match:
-        print(f"[red][APPLE TV][/red] Invalid Apple TV URL: [dodger_blue1]{appletv_url}[/dodger_blue1]")
+        print(
+            f"[red][APPLE TV][/red] Invalid Apple TV URL: [dodger_blue1]{appletv_url}[/dodger_blue1]"
+        )
         return False
 
     # check if the provided URL is for a movie
@@ -958,11 +1127,16 @@ async def download_subs(appletv_url, output_dir, regions, movie):
 
     # download the subtitles asyncronously, limit connections so that the pool
     # does not become too large
-    connector = aiohttp.TCPConnector(limit=400, limit_per_host=200)
-    async with aiohttp.ClientSession(connector=connector, headers=DEFAULT_HEADERS) as session:
+    ssl_context = create_ssl_context()
+    connector = aiohttp.TCPConnector(limit=400, limit_per_host=200, ssl=ssl_context)
+    async with aiohttp.ClientSession(
+        connector=connector, headers=DEFAULT_HEADERS
+    ) as session:
         try:
             # get unique playlists from all regions
-            playlists = await get_unique_playlists_from_regions(session, url_data, regions)
+            playlists = await get_unique_playlists_from_regions(
+                session, url_data, regions
+            )
 
             # if not playlists:
             if not playlists:

@@ -68,10 +68,9 @@ def get_tmdbmovie(movie_id: str) -> TMDBMovie | None:
                 r = requests.get(url, params=params, timeout=timeout)
                 r.raise_for_status()
                 return r
-            except Exception:
-                if attempt == retries:
-                    # print(f"[yellow][TMDB][/yellow] TMDB API failed, re-sending request")
-                    raise
+             except Exception:
+                 if attempt == retries:
+                     raise
 
     try:
         with ThreadPoolExecutor(max_workers=2) as executor:

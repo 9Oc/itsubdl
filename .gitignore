@@ -139,3 +139,7 @@ Thumbs.db
 # Project specific
 .itsubdl/
 temp/
+
+# Test artifacts (but keep test scripts)
+test/*.log
+test/debug_*/

@@ -1,0 +1,14 @@
+# Test cases for Apple TV playlist and subtitle detection
+# Issue: https://github.com/9Oc/itsubdl/issues/1
+
+# Test Case 1: TMDB ID lookup
+# Expected: Resolve Apple TV storefront, find playlists, download subtitles
+TMDB_ID=1228246
+
+# Test Case 2: Direct Apple TV URL (movie)
+# Expected: Extract media ID, find playlists, download subtitles
+APPLETV_MOVIE_URL="https://tv.apple.com/us/movie/five-nights-at-freddys-2/umc.cmc.4ers7f6sg3ia9ru4qhisv93yx"
+
+# Test Case 3: Direct Apple TV URL (episode)
+# Expected: Extract media ID, find playlists, download subtitles
+APPLETV_EPISODE_URL="https://tv.apple.com/us/episode/five-nights-at-freddys/umc.cmc.mawpa8cbsgcvv28l3qkxp0tz"
