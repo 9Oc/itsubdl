@@ -19,6 +19,7 @@ from itsubdl.tmdbmovie import TMDBMovie
 
 console = Console(color_system="truecolor")
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)  # Suppress debug messages
 
 # HTTP headers for requests
 DEFAULT_HEADERS = {
