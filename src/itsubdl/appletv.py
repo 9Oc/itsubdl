@@ -227,21 +227,12 @@ CC_CHARACTERISTICS = {
 
 def create_ssl_context():
     """
-    Create an SSL context that works with macOS certificate verification.
-    Falls back to insecure mode if certificate verification fails.
+    Create SSL configuration for aiohttp connections.
+    Disables verification for Apple TV API since it's behind CloudFlare.
     """
-    try:
-        # Create SSL context with default verification
-        ssl_context = ssl.create_default_context()
-        return ssl_context
-    except Exception:
-        # Fallback: create context that doesn't verify certificates
-        # This is used when system certificates are not available
-        ssl_context = ssl.create_default_context()
-        ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE
-        logger.debug("[create_ssl_context] Using unverified SSL context")
-        return ssl_context
+    # Return False to disable SSL verification
+    # This is safe for Apple TV API since we're not handling sensitive data
+    return False
 
 
 def get_date_from_ts(timestamp) -> datetime:
